@@ -89,7 +89,7 @@ class Analysis:
     resolved: bool | None
     frame_index: int
     limit_freq: float | None        # 2,5 / L (nur Hann gemessen)
-    limit_time: float | None        # L / 2 (nur Hann gemessen)
+    limit_time: float | None        # L / 2 + 1 (nur Hann gemessen)
     cells: int
 
 
@@ -125,7 +125,7 @@ def analyse(s: Settings) -> Analysis:
         res = T.resolved(energy, c1, c2) if 0 <= c1 and c2 < len(energy) else None
     index = int(round(s.frame * (len(centers) - 1)))
     hann = s.window == "Hann"
-    return Analysis(s, sig, x, centers, freqs, power, ridge, peaks, truth, rmse, both, step, res, index, C.FREQ_LIMIT_BINS / s.length if hann else None, s.length / 2.0 if hann else None,
+    return Analysis(s, sig, x, centers, freqs, power, ridge, peaks, truth, rmse, both, step, res, index, C.FREQ_LIMIT_BINS / s.length if hann else None, s.length / 2.0 + 1.0 if hann else None,
                     T.n_cells(s.n, s.length, s.hop))
 
 
@@ -231,7 +231,7 @@ def verdict_resolution(res: dict) -> tuple[str, str]:
     time = {r["L"]: r for r in res["time"]}
     big = max(time)
     return "info", (f"Zwei gleich starke Töne trennt das Hann-Fenster ab 2,5 Bins (Anteil getrennt {de(100 * freq[(ls[0], 2.5)], 0)} % bei 2,5 Bins, {de(100 * freq[(ls[0], 2.0)], 0)} % bei 2,0), für jede Fensterlänge; zwei Impulse ab "
-                    f"L/2 + 1 ({time[big]['dt']} bei L = {big}). Das Produkt beider Grenzen ist etwa {de(C.FREQ_LIMIT_BINS * 0.5, 2)} (2,5 mal 1/2). **Wer die Frequenz schärfer will, verliert Zeitauflösung.**")
+                    f"L/2 + 1 ({time[big]['dt']} bei L = {big}). Das Produkt beider Grenzen ist etwa {de(C.FREQ_LIMIT_BINS * 0.5, 2)} (2,5 mal 1/2, genauer 1,25 + 2,5/L). **Wer die Frequenz schärfer will, verliert Zeitauflösung.**")
 
 
 def verdict_chirp(rows: list[dict]) -> tuple[str, str]:
@@ -241,7 +241,7 @@ def verdict_chirp(rows: list[dict]) -> tuple[str, str]:
     ls = sorted({r["L"] for r in rows})
     best = min(ls, key=lambda L: at(snr, L))
     return "info", (f"Bei {snr} dB liegt der Kammfehler bei L = {ls[0]} bei {de(at(snr, ls[0]), 4)}, bei L = {best} bei {de(at(snr, best), 4)} und bei L = {ls[-1]} bei {de(at(snr, ls[-1]), 4)}. "
-                    f"**Es gibt eine beste Fensterlänge (hier {best}); kürzer stört das Rauschen, länger verschmiert die Steigung.**")
+                    f"**Für diesen Chirp gibt es eine beste Fensterlänge (hier {best}); ein kurzes Fenster löst die Frequenz grob auf, ein langes verbreitert den Gipfel (die Steigung), und dann versetzt das Rauschen den Kamm stärker.**")
 
 
 def verdict_pair(rows: list[dict]) -> tuple[str, str]:
@@ -250,18 +250,18 @@ def verdict_pair(rows: list[dict]) -> tuple[str, str]:
     df = min(r["df"] for r in rows)
     ls = sorted({r["L"] for r in rows})
     return "info", (f"Bei Abstand {de(df, 2)} sind beide Chirps in {de(100 * at(df, ls[0]), 0)} % der Rahmen getrennt bei L = {ls[0]}, in {de(100 * max(at(df, L) for L in ls), 0)} % bei der besten Länge "
-                    f"und in {de(100 * at(df, ls[-1]), 0)} % bei L = {ls[-1]}. **Das Spektrogramm trennt zwei Komponenten, die die Momentanfrequenz nicht trennt, aber nur in einem Bereich von Fensterlängen.**")
+                    f"und in {de(100 * at(df, ls[-1]), 0)} % bei L = {ls[-1]}. **Das Spektrogramm trennt zwei Komponenten nur in einem Bereich von Fensterlängen; die Momentanfrequenz liefert nur einen Wert je Zeitpunkt (siehe Demo zur Momentanfrequenz) und trennt die beiden nicht.**")
 
 
 def verdict_correlation(rows: list[dict]) -> tuple[str, str]:
     by = {r["hop"]: r for r in rows}
     hops = sorted(by, reverse=True)
     return "info", (f"Benachbarte Bins sind mit {de(by[hops[0]]['bin1'], 2)} korreliert; benachbarte Rahmen bei Schrittweite {hops[1]} (50 % Überlappung) mit {de(by[hops[1]]['frames'], 2)}, bei {hops[2]} (75 %) mit {de(by[hops[2]]['frames'], 2)} "
-                    f"und bei {hops[3]} mit {de(by[hops[3]]['frames'], 2)}. **Mehr Zellen heißt nicht mehr unabhängige Information.**")
+                    f"und bei {hops[3]} mit {de(by[hops[3]]['frames'], 2)}. **Mehr Überlappung bringt oberhalb von etwa 50 % kaum neue Information.**")
 
 
 def verdict_threshold(rows: list[dict]) -> tuple[str, str]:
     by = {r["hop"]: r for r in rows}
     small = min(by)
     return "warning", (f"Bei Schrittweite {small} hat das Spektrogramm {by[small]['cells']} Zellen. Die Šidák-Schwelle über alle Zellen ({de(by[small]['z_all'], 2)}) gibt {de(100 * by[small]['alarm_all'], 1)} % Falschalarm, "
-                       f"über nur {by[small]['independent']} Zellen gezählt ({de(by[small]['z_independent'], 2)}) {de(100 * by[small]['alarm_independent'], 1)} %. **Die Schwelle muss die Zahl der Zellen kennen.**")
+                       f"über nur {by[small]['independent']} Zellen gezählt ({de(by[small]['z_independent'], 2)}) {de(100 * by[small]['alarm_independent'], 1)} %. **Die Schwelle hängt von der Zellzahl ab; bei korrelierten Zellen ist die wirksame Zahl kleiner als die der Zellen und nicht einfach die Zahl der Zellen bei Schrittweite L.**")

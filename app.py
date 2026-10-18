@@ -68,7 +68,7 @@ with st.expander("So entsteht das Spektrogramm", expanded=True):
 1. **Rahmen:** Fenster der Länge $L$ im Abstand der Schrittweite (Hop); die Zeit eines Rahmens ist seine Mitte.
 2. **Fenster und FFT:** Jeder Rahmen wird mit dem Hann-Fenster (oder dem Rechteck) multipliziert; Nullen anhängen (Faktor 1 bis 8) macht die Kurve glatter, nicht schärfer.
 3. **Leistung:** $|X|^2$ je Rahmen und Bin; dargestellt in dB gegen das Maximum, bei $-60$ dB abgeschnitten.
-4. **Grenzen:** Hann trennt zwei Töne erst ab 2,5 Bins ($2{,}5/L$) und zwei Impulse erst ab etwa $L/2$ Abtastwerten; das Produkt beider Grenzen ist fest.
+4. **Grenzen:** Hann trennt zwei gleich starke Töne bei allen gemessenen Phasenlagen ab 2,5 Bins ($2{,}5/L$; je nach Phase auch schon früher) und zwei Impulse ab $L/2 + 1$ Abtastwerten; das Produkt beider Grenzen ist etwa 1,25 und fast unabhängig von $L$.
         """
     )
 
@@ -103,7 +103,7 @@ with st.sidebar:
         st.session_state["length_select"] = max(l_options)
     length = st.select_slider("Fensterlänge L", options=l_options, key="length_select", help="Zahl der Abtastwerte je Rahmen; höchstens n.")
     window = st.radio("Fensterform", list(C.WINDOW_CHOICES), key="window_select", horizontal=True, help="Hann: glatt, geringes Lecken. Rechteck: schmalster Hauptlappen, hohes Lecken. Die gemessenen Grenzen gelten für Hann.")
-    overlap = st.select_slider("Überlappung der Rahmen (%)", options=list(C.OVERLAP_CHOICES), key="overlap_select", help="Schrittweite = L mal (1 − Überlappung). Mehr Überlappung: mehr Zellen, aber nicht mehr Information.")
+    overlap = st.select_slider("Überlappung der Rahmen (%)", options=list(C.OVERLAP_CHOICES), key="overlap_select", help="Schrittweite = L mal (1 − Überlappung). Mehr Überlappung: mehr Zellen, aber oberhalb von etwa 50 % kaum neue Information.")
     pad = st.select_slider("Nullen anhängen (Faktor)", options=list(C.PAD_CHOICES), key="pad_select", help="FFT-Länge = Faktor mal L. Glättet die Kurve, ändert die Auflösung nicht.")
     st.markdown("**Gezeigter Rahmen**")
     frame = st.slider("Lage des Rahmens", C.FRAME_MIN, C.FRAME_MAX, float(st.session_state["frame_slider"]), step=C.FRAME_STEP, key="frame_slider", help="Welchen Rahmen das Einzelspektrum zeigt (Anteil der Zeit).")
@@ -141,7 +141,7 @@ else:
     m1.metric("Kennzahl", "–", delta="nicht auswertbar", delta_color="off")
 m2.metric("Trenngrenze Frequenz", de(a.limit_freq, 4) if a.limit_freq is not None else "–", delta="2,5 / L (Hann)" if a.limit_freq is not None else "nur für Hann gemessen", delta_color="off",
           help="Zwei gleich starke Töne werden vom Hann-Fenster ab 2,5 Bins getrennt (Experiment unten).")
-m3.metric("Trenngrenze Zeit", f"{de(a.limit_time, 0)} Abtastwerte" if a.limit_time is not None else "–", delta="etwa L / 2 (Hann)" if a.limit_time is not None else "nur für Hann gemessen", delta_color="off",
+m3.metric("Trenngrenze Zeit", f"{de(a.limit_time, 0)} Abtastwerte" if a.limit_time is not None else "–", delta="L / 2 + 1 (Hann)" if a.limit_time is not None else "nur für Hann gemessen", delta_color="off",
           help="Zwei Impulse werden in der Kurzzeitenergie ab L/2 + 1 Abtastwerten getrennt (Experiment unten).")
 m4.metric("Zellen", f"{a.cells}", delta=f"{len(a.centers)} Rahmen, Schrittweite {settings.hop}", delta_color="off", help="Rahmen mal Bins 1 bis L/2 − 1; benachbarte Zellen sind korreliert.")
 st.plotly_chart(build_signal(a), width="stretch", key="signal")
@@ -151,7 +151,7 @@ st.plotly_chart(build_frame(a), width="stretch", key="frame")
 st.caption("Spektrum des gezeigten Rahmens (orange im Spektrogramm). Der Hauptlappen des Hann-Fensters ist 4 Bins = 4/L breit: Ein längeres Fenster macht ihn schmaler.")
 if kind == "Zwei Impulse":
     st.plotly_chart(build_energy(a), width="stretch", key="energy")
-    st.caption("Kurzzeitenergie: Summe der gefensterten Quadrate in einem Fenster der Länge L, Schrittweite 1. Sind die Impulse näher als etwa L/2, verschmelzen die zwei Gipfel.")
+    st.caption("Kurzzeitenergie: Summe der gefensterten Quadrate in einem Fenster der Länge L, Schrittweite 1. Liegen die Impulse höchstens L/2 auseinander (Hann), verschmelzen die zwei Gipfel.")
 
 if st.button("📄 PDF erstellen", key="pdf_make"):
     st.session_state["pdf_bytes"] = build_pdf(a)
@@ -216,7 +216,7 @@ st.markdown("#### Wie viele Zellen zählt die Schwelle?")
 thr = _experiment("threshold")
 st.caption(f"Weißes Rauschen, n = {C.EXP_THR_N}, L = {C.EXP_THR_L}, Hann, {C.EXP_THR_RUNS} Läufe. Die Schwelle für den höchsten Zellwert (Quotient zur mittleren Zellleistung) ist die Šidák-Schwelle zum Niveau {C.EXP_THR_ALPHA:g}, "
            "einmal mit der Zahl aller Zellen, einmal mit der Zahl der Zellen bei Schrittweite L gerechnet; angegeben ist der Anteil der Läufe mit Falschalarm.")
-st.dataframe(pd.DataFrame([{"Schrittweite": r["hop"], "Zellen": r["cells"], "Schwelle (alle Zellen)": de(r["z_all"], 2), "Falschalarm": f"{de(100 * r['alarm_all'], 1)} %", "Schwelle (nur unabhängige)": de(r["z_independent"], 2),
+st.dataframe(pd.DataFrame([{"Schrittweite": r["hop"], "Zellen": r["cells"], "Schwelle (alle Zellen)": de(r["z_all"], 2), "Falschalarm": f"{de(100 * r['alarm_all'], 1)} %", "Schwelle (Zellen bei Schrittweite L)": de(r["z_independent"], 2),
                             "Falschalarm ": f"{de(100 * r['alarm_independent'], 1)} %"} for r in thr]), hide_index=True, width="stretch")
 st.plotly_chart(build_threshold(thr), width="stretch", key="exp_thr")
 kind_v, text = ev.verdict_threshold(thr)
@@ -232,10 +232,10 @@ st.markdown(
 | Annahme | Was passiert, wenn sie verletzt ist | Wer setzt an |
 |---|---|---|
 | **Eine feste Fensterlänge passt für alles** | Ein langes Fenster verschmiert schnelle Änderungen, ein kurzes trennt nahe Frequenzen nicht; Zeit- und Frequenzauflösung sind gekoppelt. | Wavelets |
-| **Ein Chirp ist langsam gegen das Fenster** | Ändert sich die Frequenz innerhalb eines Fensters merklich, wird der Gipfel breit und der Kamm verfehlt die Wahrheit. | Reassignment (nicht gebaut) |
-| **Zellen sind unabhängig** | Benachbarte Zellen sind korreliert (Bins 0,44, Rahmen je nach Überlappung bis über 0,8); eine Schwelle muss die Zahl der unabhängigen Zellen kennen. | Mehrfachtests |
+| **Ein Chirp ist langsam gegen das Fenster** | Ändert sich die Frequenz innerhalb eines Fensters merklich, wird der Gipfel breit, und das Rauschen versetzt den Kamm leichter. | Reassignment (nicht gebaut) |
+| **Zellen sind unabhängig** | Benachbarte Zellen sind korreliert (Bins 0,44, Rahmen je nach Überlappung bis über 0,8); eine Schwelle hängt von der Zellzahl ab, und bei korrelierten Zellen ist die wirksame Zahl kleiner. | Mehrfachtests |
 | **Hann-Grenzen gelten für alle Fenster** | Gemessen sind sie nur für Hann; das Rechteck hat einen schmaleren Hauptlappen, aber hohes Lecken. | – |
-| **Rückgewinnung** | Ein Spektrogramm mit Phase lässt sich zurückrechnen (ISTFT); hier nur die Leistung, ohne Phase nicht eindeutig. | ISTFT (nicht gebaut) |
+| **Rückgewinnung** | Ein Spektrogramm mit Phase lässt sich zurückrechnen (ISTFT); hier nur die Leistung; aus der Leistung allein ist die Rückgewinnung schwierig (Phasenrekonstruktion), die Demo geht darauf nicht ein. | ISTFT (nicht gebaut) |
 """,
 )
 
@@ -247,14 +247,14 @@ with st.expander("📐 Mathematische Formulierung"):
 **STFT.** Für ein Fenster $w$ der Länge $L$ und die Schrittweite $h$ ist $X_m[k] = \sum_{j=0}^{L-1} w[j]\,x[mh + j]\,e^{-2\pi i jk/N}$ mit $N$ = FFT-Länge (mit Nullen aufgefüllt); die Zeit des Rahmens ist $mh + L/2$,
 die dargestellte Größe $|X_m[k]|^2$ in dB gegen das Maximum. Das periodische Hann-Fenster ist $w[j] = \tfrac12(1 - \cos(2\pi j/L))$.
 
-**Unschärfe.** Das Hann-Fenster hat einen Hauptlappen der Breite 4 Bins ($4/L$); zwei gleich starke Töne zeigen zwei Gipfel erst ab 2,5 Bins. Zwei Impulse im Abstand $\Delta$ liegen zusammen in einem Fenster
-der Länge $L$, solange $\Delta < L/2$: Die Kurzzeitenergie zeigt dann einen Gipfel. Das Produkt aus Frequenz- und Zeitgrenze ist unabhängig von $L$.
+**Unschärfe.** Das Hann-Fenster hat einen Hauptlappen der Breite 4 Bins ($4/L$); zwei gleich starke Töne zeigen bei allen gemessenen Phasenlagen zwei Gipfel ab 2,5 Bins (je nach Phase schon früher). Zwei Impulse im Abstand $\Delta \le L/2$ zeigt die mit $w^2$ gewichtete
+Kurzzeitenergie des Hann-Fensters als einen Gipfel (Rechteck: bis $\Delta = L$). Das Produkt aus Frequenz- und Zeitgrenze ist etwa 1,25 (genauer $1{,}25 + 2{,}5/L$) und fast unabhängig von $L$.
 
 **Kamm.** Der Gipfel jedes Rahmens, durch eine Parabel durch die logarithmierten drei Nachbarwerte verfeinert; für einen Chirp mit Steigung $\kappa$ liegt die Frequenz in der Rahmenmitte bei $f_0 + \kappa t$.
 
 **Korrelation.** Für weißes Rauschen und Hann ist die Korrelation der Leistungen in benachbarten Bins $(2/3)^2 \approx 0{,}44$, zwischen benachbarten Rahmen steigt sie mit der Überlappung.
 
-**Schwelle.** Šidák: $z_\alpha = -\ln(1 - (1-\alpha)^{1/m})$ für $m$ Zellen (Quotient der Zellleistung zur mittleren Leistung); mit korrelierten Zellen ist $m$ die Zahl der unabhängigen.
+**Schwelle.** Šidák: $z_\alpha = -\ln(1 - (1-\alpha)^{1/m})$ für $m$ Zellen (Quotient der Zellleistung zur mittleren Leistung); mit korrelierten Zellen ist die wirksame Zellzahl kleiner als die Zahl der Zellen und nicht einfach die Zahl der Zellen bei Schrittweite $L$.
 
 **Quellen.** Lehrbuchwissen und Aufsätze (Allen und Rabiner 1977; Harris 1978; Cohen 1995). Formeln hier per Simulation, Handrechnung und gegen scipy geprüft; die Quellen selbst wurden nicht gelesen.
         """

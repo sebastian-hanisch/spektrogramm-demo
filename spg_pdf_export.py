@@ -33,7 +33,7 @@ def build_pdf(a: Analysis) -> bytes:
     pdf.ln(2)
     out = [f"Spektrogramm: {len(a.centers)} Rahmen, {a.cells} Zellen (Bins 1 bis L/2 - 1)."]
     if a.limit_freq is not None:
-        out.append(f"Trenngrenze bei Hann: zwei Töne ab {de(a.limit_freq, 4)} (2,5 / L), zwei Impulse ab {de(a.limit_time, 0)} Abtastwerten (L/2).")
+        out.append(f"Trenngrenze bei Hann: zwei Töne ab {de(a.limit_freq, 4)} (2,5 / L), zwei Impulse ab {de(a.limit_time, 0)} Abtastwerten (L/2 + 1).")
     if a.rmse is not None:
         out.append(f"Kammfehler (RMSE gegen die wahre Frequenz in den Rahmenmitten): {de(a.rmse, 4)}.")
     if a.both_share is not None:

@@ -133,7 +133,7 @@ def build_threshold(rows) -> go.Figure:
     labels = [f"Schrittweite {r['hop']} ({r['cells']} Zellen)" for r in rows]
     fig = go.Figure()
     fig.add_trace(go.Bar(x=labels, y=[100 * r["alarm_all"] for r in rows], name="Schwelle über alle Zellen", hovertemplate="%{x}: %{y:.1f} %<extra></extra>"))
-    fig.add_trace(go.Bar(x=labels, y=[100 * r["alarm_independent"] for r in rows], name="Schwelle nur über die unabhängigen Zellen", hovertemplate="%{x}: %{y:.1f} %<extra></extra>"))
+    fig.add_trace(go.Bar(x=labels, y=[100 * r["alarm_independent"] for r in rows], name="Schwelle nur über die Zellen bei Schrittweite L", hovertemplate="%{x}: %{y:.1f} %<extra></extra>"))
     fig.add_hline(y=100 * C.EXP_THR_ALPHA, line=dict(color="black", width=1, dash="dot"), annotation_text="5 % angestrebt", annotation_position="top right")
     fig.update_yaxes(title_text="Falschalarm (%)", rangemode="tozero")
     fig.update_layout(barmode="group")

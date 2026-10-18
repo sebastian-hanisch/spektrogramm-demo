@@ -56,7 +56,7 @@ def test_analyse_chirp_and_tone_follow_the_truth():
     a = ev.analyse(ev.Settings())
     assert a.rmse < 1e-6 and len(a.centers) == 29 and a.power.shape == (29, 4 * 128 // 2 + 1) and a.cells == T.n_cells(1024, 128, 32) == 1827
     assert a.ridge.shape == (29,) and a.truth.shape == (1, 29) and a.centers[:3].tolist() == [64.0, 96.0, 128.0] and a.peaks is None and a.step_error is None and a.both_share is None and a.resolved is None
-    assert a.frame_index == 14 and a.limit_freq == pytest.approx(2.5 / 128) and a.limit_time == 64.0
+    assert a.frame_index == 14 and a.limit_freq == pytest.approx(2.5 / 128) and a.limit_time == 65.0
     t = ev.analyse(ev.Settings(signal="Ton", p1=0.2137, p2=0.0, length=64))
     assert t.rmse < 1e-5 and t.truth.tolist() == [[0.2137] * len(t.centers)]
 

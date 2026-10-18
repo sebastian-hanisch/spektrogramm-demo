@@ -67,8 +67,8 @@ PRESETS = {
 }
 PRESET_HELP = {
     "Chirp mit passender Fensterlänge": "Linearer Chirp von 0,1 bis 0,3 bei 10 dB Rauschabstand und Fensterlänge 128: Der Kamm folgt der wahren Frequenz auf etwa 0,0002.",
-    "Zu kurzes Fenster: die Frequenz verschwimmt": "Dieselbe Messung bei 0 dB mit Fensterlänge 16: Die Frequenzauflösung ist grob und das Rauschen stört; der Kammfehler liegt mehr als das Dreihundertfache über dem des ersten Beispiels.",
-    "Zu langes Fenster: der Chirp verschmiert": "Fensterlänge 512 bei 10 dB: Die Frequenz ändert sich innerhalb eines Fensters, der Gipfel wird breit und der Kammfehler steigt wieder (etwa das 19-Fache).",
+    "Zu kurzes Fenster: die Frequenz verschwimmt": "Dieselbe Messung bei 0 dB mit Fensterlänge 16: Die Frequenzauflösung ist grob und das Rauschen stört; der Kammfehler liegt mehr als das Dreihundertfache über dem des ersten Beispiels (10 dB, Länge 128); bei gleichem Rauschabstand allein durch die Fensterlänge etwa das 20- bis 100-Fache.",
+    "Zu langes Fenster: der Chirp verschmiert": "Fensterlänge 512 bei 10 dB: Die Frequenz ändert sich innerhalb eines Fensters, der Gipfel wird breit, und das Rauschen versetzt den Kamm leichter (etwa das 19-Fache des Fehlers bei Länge 128).",
     "Zwei parallele Chirps: nur ein Fenster trennt sie": "Zwei Chirps im Abstand 0,02: Mit Fensterlänge 128 sind beide Kämme in jedem Rahmen getrennt; bei 32 verschmelzen sie, bei 512 verschmiert die Steigung beide.",
     "Zwei Impulse: das lange Fenster sieht nur einen": "Zwei Impulse im Abstand 64 bei Fensterlänge 256: Der Abstand liegt unter L/2 = 128, die Kurzzeitenergie zeigt nur einen Gipfel; mit Länge 64 sind beide getrennt.",
 }
