@@ -92,7 +92,7 @@ def test_verdict_correlation_names_the_hops_in_descending_order():
     kind, text = ev.verdict_correlation(rows)
     assert kind == "info"
     assert text == ("Benachbarte Bins sind mit 0,44 korreliert; benachbarte Rahmen bei Schrittweite 32 (50 % Überlappung) mit 0,03, bei 16 (75 %) mit 0,44 und bei 8 mit 0,81. "
-                    "**Mehr Überlappung bringt oberhalb von etwa 50 % kaum neue Information.**")
+                    "**Mehr Überlappung bringt oberhalb von etwa 50 % deutlich weniger neue Information, die Korrelation benachbarter Rahmen wächst stark.**")
 
 
 def test_verdict_threshold_uses_the_smallest_hop():

@@ -257,7 +257,7 @@ def verdict_correlation(rows: list[dict]) -> tuple[str, str]:
     by = {r["hop"]: r for r in rows}
     hops = sorted(by, reverse=True)
     return "info", (f"Benachbarte Bins sind mit {de(by[hops[0]]['bin1'], 2)} korreliert; benachbarte Rahmen bei Schrittweite {hops[1]} (50 % Überlappung) mit {de(by[hops[1]]['frames'], 2)}, bei {hops[2]} (75 %) mit {de(by[hops[2]]['frames'], 2)} "
-                    f"und bei {hops[3]} mit {de(by[hops[3]]['frames'], 2)}. **Mehr Überlappung bringt oberhalb von etwa 50 % kaum neue Information.**")
+                    f"und bei {hops[3]} mit {de(by[hops[3]]['frames'], 2)}. **Mehr Überlappung bringt oberhalb von etwa 50 % deutlich weniger neue Information, die Korrelation benachbarter Rahmen wächst stark.**")
 
 
 def verdict_threshold(rows: list[dict]) -> tuple[str, str]:

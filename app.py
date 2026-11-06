@@ -62,6 +62,17 @@ Alles ist **simuliert**: Chirp, Sprung und Impulse sind bekannt. Weiter unten: *
 """
 )
 
+# erklaerseite:einfach:start (erzeugt von tools/set_demo_explainer.py (Website-Repo) aus tools/content/explainers/spektrogramm-erklaert.json, nicht von Hand ändern)
+with st.expander("💬 In einfachen Worten"):
+    st.markdown(
+        """
+Eine Sirene zieht ihren Ton nach oben. Das **Spektrogramm** zeichnet das als Bild: nach rechts die Zeit, nach oben die Tonhöhe, und die Helligkeit zeigt, wie stark ein Ton gerade ist. Dazu schneidet man die Aufnahme in kurze, sich überlappende Schnipsel (Fenster) und bestimmt für jeden die Tonhöhen. Die Länge der Schnipsel entscheidet, was man sieht: Lange trennen nahe Tonhöhen scharf, verschmieren aber die Zeit. Kurze zeigen genau, wann etwas geschieht, verwischen aber die Tonhöhe. Die Demo misst beide Grenzen an künstlichen Signalen mit bekannter Wahrheit. Sie sucht die beste Schnipsellänge für einen steigenden Ton im Rauschen, prüft, wann zwei parallel steigende Töne getrennt bleiben, und zeigt, warum benachbarte Bildpunkte nicht unabhängig sind.
+
+[Ausführlich und verständlich erklärt, mit Fachteil](https://sebastianhanisch.net/spektrogramm-erklaert.html)
+        """
+    )
+# erklaerseite:einfach:end
+
 with st.expander("So entsteht das Spektrogramm", expanded=True):
     st.markdown(
         """
@@ -103,7 +114,7 @@ with st.sidebar:
         st.session_state["length_select"] = max(l_options)
     length = st.select_slider("Fensterlänge L", options=l_options, key="length_select", help="Zahl der Abtastwerte je Rahmen; höchstens n.")
     window = st.radio("Fensterform", list(C.WINDOW_CHOICES), key="window_select", horizontal=True, help="Hann: glatt, geringes Lecken. Rechteck: schmalster Hauptlappen, hohes Lecken. Die gemessenen Grenzen gelten für Hann.")
-    overlap = st.select_slider("Überlappung der Rahmen (%)", options=list(C.OVERLAP_CHOICES), key="overlap_select", help="Schrittweite = L mal (1 − Überlappung). Mehr Überlappung: mehr Zellen, aber oberhalb von etwa 50 % kaum neue Information.")
+    overlap = st.select_slider("Überlappung der Rahmen (%)", options=list(C.OVERLAP_CHOICES), key="overlap_select", help="Schrittweite = L mal (1 − Überlappung). Mehr Überlappung: mehr Zellen, aber oberhalb von etwa 50 % deutlich weniger neue Information (die Korrelation benachbarter Rahmen wächst stark).")
     pad = st.select_slider("Nullen anhängen (Faktor)", options=list(C.PAD_CHOICES), key="pad_select", help="FFT-Länge = Faktor mal L. Glättet die Kurve, ändert die Auflösung nicht.")
     st.markdown("**Gezeigter Rahmen**")
     frame = st.slider("Lage des Rahmens", C.FRAME_MIN, C.FRAME_MAX, float(st.session_state["frame_slider"]), step=C.FRAME_STEP, key="frame_slider", help="Welchen Rahmen das Einzelspektrum zeigt (Anteil der Zeit).")
@@ -242,6 +253,25 @@ st.markdown(
 st.markdown("---")
 
 with st.expander("📐 Mathematische Formulierung"):
+    # erklaerseite:lesehilfe:start (erzeugt von tools/set_demo_explainer.py (Website-Repo) aus tools/content/explainers/spektrogramm-erklaert.json, nicht von Hand ändern)
+    st.markdown(
+        r"""
+**Lesehilfe.** Gegeben ist eine simulierte Aufzeichnung $x[0], \dots, x[n-1]$ mit bekannter Wahrheit. Gesucht ist, wie die Fensterlänge $L$ bestimmt, wie scharf Frequenz und Zeit im Spektrogramm getrennt werden, und welches $L$ einen Chirp in Rauschen am besten verfolgt.
+
+| Symbol | Bedeutung |
+|---|---|
+| $x[t]$, $n$ | Aufzeichnung zum Zeitpunkt $t$ und ihre Länge (Abtastwerte) |
+| $L$, $h$ | Fensterlänge und Schrittweite zwischen zwei Rahmen |
+| $w[j]$ | Fenster (Hann oder Rechteck): Gewicht des $j$-ten Werts im Rahmen |
+| $X_m[k]$ | Fourier-Wert des Rahmens $m$ beim Gitterpunkt $k$ (Frequenz $k/N$, Gitterbreite $1/N$) |
+| Bin | Frequenzbreite $1/L$ (die Auflösung ohne Auffüllen); Abstände „in Bins“ sind in dieser Einheit gemessen |
+| $N$ | Länge der FFT (Rahmen mit Nullen aufgefüllt) |
+| $d_f$ | fester Frequenzabstand zweier paralleler Chirps |
+
+[Schritt für Schritt erklärt, mit Herleitung und Literatur](https://sebastianhanisch.net/spektrogramm-erklaert.html#fachleute)
+        """
+    )
+    # erklaerseite:lesehilfe:end
     st.markdown(
         r"""
 **STFT.** Für ein Fenster $w$ der Länge $L$ und die Schrittweite $h$ ist $X_m[k] = \sum_{j=0}^{L-1} w[j]\,x[mh + j]\,e^{-2\pi i jk/N}$ mit $N$ = FFT-Länge (mit Nullen aufgefüllt); die Zeit des Rahmens ist $mh + L/2$,
